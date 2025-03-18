@@ -120,6 +120,18 @@ public class PrStatisticCalculator implements PrStatisticCalculatorPort {
                         return;
                     }
 
+                    if (!userStatistics.containsKey(review.getUser().getId())) {
+                        UserStatistic userStatistic = UserStatistic.builder()
+                                .contributor(review.getUser().getLogin())
+                                .raisedPrCount(0L)
+                                .receivedCommentPerPr(0.0)
+                                .reviewedPrCount(1L)
+                                .build();
+                        userStatistics.put(review.getUser().getId(), userStatistic);
+                        reviewerUserIds.add(review.getUser().getId());
+                        return;
+                    }
+
                     UserStatistic userStatistic = userStatistics.get(review.getUser().getId());
                     userStatistic.setReviewedPrCount(userStatistic.getReviewedPrCount() + 1);
                     userStatistics.put(review.getUser().getId(), userStatistic);
