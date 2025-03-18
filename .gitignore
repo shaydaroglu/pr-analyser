@@ -1,0 +1,16 @@
+/target
+.gitignore
+
+
+# IntelliJ
+.idea
+*.ipr
+*.iml
+*.iws
+
+# OSX
+.DS_Store
+
+# Local environment
+.env
+.envrc
