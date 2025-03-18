@@ -2,6 +2,7 @@
 
 # Set Java 21 for Maven
 export JAVA_HOME := $(shell /usr/libexec/java_home -v 21)
+ARGS="-h"
 
 JAR_NAME=target/pr-analyser-1.0.jar
 

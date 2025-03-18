@@ -35,14 +35,19 @@ export PATH=$JAVA_HOME/bin:$PATH
 
 For first time usage run the following command to get the help message:
   ```bash
-  make run ARGS="-h"
+  make run
   ```
+or alternatively 
+```bash
+make build
+make exec
+```
 It will set JAVA_HOME to the correct version and run the application.
 
 Alternatively, you can run the following commands:
   ```bash
   make build
-  make exec ARGS="-h"
+  make exec ARGS="-r pr-analyser -u username -sd 2025-03-18 -ed 2025-03-18 -t Github_Access_Token"
   ```
 
 Example parameters to run the application:
