@@ -15,11 +15,13 @@ Ensure the following stack is installed:
 
 ## Get started
 
-### Initial setup
+### Initial setup & Run (Manual Execution)
 
 * Git clone this repo and cd into it
 * Run `mvn clean install` to install the dependencies
 * Run `mvn package` to build the application
+* Run `java -jar target/pr-analyser-1.0.jar -h` to get the help message
+* Run `java -jar target/pr-analyser-1.0.jar -r pr-analyser -u username -sd 2025-03-18 -ed 2025-03-18 -t Github_Access_Token`
 
 In case mvn uses different java version, you can specify the java version by setting JAVA_HOME environment variable.
 
@@ -30,7 +32,6 @@ export PATH=$JAVA_HOME/bin:$PATH
 ```
 ### Running the application
 
-* Run the application:
 
 For first time usage run the following command to get the help message:
   ```bash
