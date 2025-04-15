@@ -17,8 +17,8 @@ import java.util.concurrent.Callable;
         description = """
                 Fetches GitHub user PR statistics for given dates for a repository.
                 Example Usage:
-                java -jar pr-analyser.jar --repository-name pr-analyser --user username --start-date 2025-03-16 --end-date 2025-03-18 --access-token Github_Access_Token
-                java -jar pr-analyser.jar -r pr-analyser -u username -sd 2025-03-18 -ed 2025-03-18 -t Github_Access_Token
+                java -jar pr-analyser.jar --repository-name pr-analyser --owner owner --start-date 2025-03-16 --end-date 2025-03-18 --access-token Github_Access_Token
+                java -jar pr-analyser.jar -r pr-analyser -o owner -sd 2025-03-18 -ed 2025-03-18 -t Github_Access_Token
                 """,
         version = "1.0",
         mixinStandardHelpOptions = true
@@ -29,8 +29,8 @@ public class PrAnalyserCommand implements Callable<Integer> {
     @Option(names = {"-r", "--repository-name"}, description = "Name of the repository.", required = true)
     private String repositoryName;
 
-    @Option(names = {"-u", "--user"}, description = "GitHub username.", required = true)
-    private String user;
+    @Option(names = {"-o", "--owner"}, description = "Repository owner.", required = true)
+    private String owner;
 
     @Option(names = {"-t", "--access-token"}, description = "GitHub access token.", required = true)
     private String accessToken;
@@ -52,7 +52,7 @@ public class PrAnalyserCommand implements Callable<Integer> {
         try {
             userCounts = prStatisticCalculatorPort.calculateUserPrStatistics(
                     repositoryName,
-                    user,
+                    owner,
                     accessToken,
                     startDate,
                     endDate);
