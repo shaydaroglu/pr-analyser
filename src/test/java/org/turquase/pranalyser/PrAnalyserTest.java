@@ -14,7 +14,7 @@ class PrAnalyserTest {
         PrAnalyserCommand mockCommand = mock(PrAnalyserCommand.class);
         when(mockCommand.call()).thenReturn(0);
         CommandLine commandLine = new CommandLine(mockCommand);
-        int exitCode = commandLine.execute("-r", "pr-analyser", "-u", "username", "-sd", "2025-03-16", "-ed", "2025-03-18", "-t", "Github_Access_Token");
+        int exitCode = commandLine.execute("-r", "pr-analyser", "-o", "owner", "-sd", "2025-03-16", "-ed", "2025-03-18", "-t", "Github_Access_Token");
         assertEquals(0, exitCode);
     }
 
@@ -23,7 +23,7 @@ class PrAnalyserTest {
         PrAnalyserCommand mockCommand = mock(PrAnalyserCommand.class);
         when(mockCommand.call()).thenReturn(1);
         CommandLine commandLine = new CommandLine(mockCommand);
-        int exitCode = commandLine.execute("-r", "pr-analyser", "-u", "username", "-sd", "2025-03-16", "-ed", "2025-03-18", "-t", "Github_Access_Token");
+        int exitCode = commandLine.execute("-r", "pr-analyser", "-o", "owner", "-sd", "2025-03-16", "-ed", "2025-03-18", "-t", "Github_Access_Token");
         assertEquals(1, exitCode);
     }
 

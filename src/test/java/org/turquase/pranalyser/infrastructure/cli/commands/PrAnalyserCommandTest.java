@@ -25,7 +25,7 @@ class PrAnalyserCommandTest {
 
         PrAnalyserCommand command = new PrAnalyserCommand(mockPort);
         CommandLine cmd = new CommandLine(command);
-        int exitCode = cmd.execute("-r", "repo", "-u", "user", "-t", "token", "-sd", "2025-03-16", "-ed", "2025-03-18");
+        int exitCode = cmd.execute("-r", "repo", "-o", "owner", "-t", "token", "-sd", "2025-03-16", "-ed", "2025-03-18");
 
         assertEquals(0, exitCode);
     }
@@ -38,7 +38,7 @@ class PrAnalyserCommandTest {
 
         PrAnalyserCommand command = new PrAnalyserCommand(mockPort);
         CommandLine cmd = new CommandLine(command);
-        int exitCode = cmd.execute("-r", "repo", "-u", "user", "-t", "token", "-sd", "2025-03-16", "-ed", "2025-03-18");
+        int exitCode = cmd.execute("-r", "repo", "-o", "owner", "-t", "token", "-sd", "2025-03-16", "-ed", "2025-03-18");
 
         assertEquals(1, exitCode);
     }
@@ -52,7 +52,7 @@ class PrAnalyserCommandTest {
 
         PrAnalyserCommand command = new PrAnalyserCommand(mockPort);
         CommandLine cmd = new CommandLine(command);
-        int exitCode = cmd.execute("-r", "repo", "-u", "user", "-t", "token", "-sd", "2025-03-16", "-ed", "2025-03-18");
+        int exitCode = cmd.execute("-r", "repo", "-o", "owner", "-t", "token", "-sd", "2025-03-16", "-ed", "2025-03-18");
 
         assertEquals(0, exitCode);
     }
@@ -62,11 +62,11 @@ class PrAnalyserCommandTest {
         PrStatisticCalculatorPort mockPort = mock(PrStatisticCalculatorPort.class);
         PrAnalyserCommand command = new PrAnalyserCommand(mockPort);
         CommandLine cmd = new CommandLine(command);
-        int exitCode = cmd.execute("-u", "user", "-t", "token", "-sd", "2025-03-16", "-ed", "2025-03-18");
+        int exitCode = cmd.execute("-o", "owner", "-t", "token", "-sd", "2025-03-16", "-ed", "2025-03-18");
         int exitCode2 = cmd.execute("-r", "repo", "-t", "token", "-sd", "2025-03-18", "-ed", "2025-03-18");
-        int exitCode3 = cmd.execute("-r", "repo", "-u", "user", "-sd", "2025-03-18", "-ed", "2025-03-18");
-        int exitCode4 = cmd.execute("-r", "repo", "-u", "user", "-t", "token", "-ed", "2025-03-18");
-        int exitCode5 = cmd.execute("-r", "repo", "-u", "user", "-t", "token", "-sd", "2025-03-18");
+        int exitCode3 = cmd.execute("-r", "repo", "-o", "owner", "-sd", "2025-03-18", "-ed", "2025-03-18");
+        int exitCode4 = cmd.execute("-r", "repo", "-o", "owner", "-t", "token", "-ed", "2025-03-18");
+        int exitCode5 = cmd.execute("-r", "repo", "-o", "owner", "-t", "token", "-sd", "2025-03-18");
         int exitCode6 = cmd.execute("-");
 
         assertEquals(2, exitCode);
