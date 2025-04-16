@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class ServiceFactoryTest {
     @Test
     void shouldCreatePrStatisticCalculatorPort() {
-        PrStatisticCalculatorPort port = ServiceFactory.createPrStatisticCalculatorPort();
+        PrStatisticCalculatorPort port = ServiceFactory.createPrStatisticCalculatorPort("accessToken");
         assertNotNull(port);
     }
 
