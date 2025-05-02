@@ -2,6 +2,7 @@ package org.turquase.pranalyser.domain.services;
 
 import lombok.extern.slf4j.Slf4j;
 import org.turquase.pranalyser.application.ServiceFactory;
+import org.turquase.pranalyser.domain.exceptions.PrStatisticCalculatorServiceException;
 import org.turquase.pranalyser.infrastructure.github.dtos.responses.Comment;
 import org.turquase.pranalyser.infrastructure.github.dtos.responses.PullRequest;
 import org.turquase.pranalyser.infrastructure.github.dtos.responses.Review;
@@ -16,14 +17,19 @@ import java.util.List;
 import java.util.Objects;
 
 @Slf4j
-public class PrStatisticCalculator implements PrStatisticCalculatorPort {
+public class PrStatisticCalculatorService implements PrStatisticCalculatorPort {
     private static final String OWNER = "OWNER";
+    private final GitRepoServicePort gitRepoServicePort;
+
+    public PrStatisticCalculatorService(String accessToken) {
+        this.gitRepoServicePort = ServiceFactory.createGithubServicePort(accessToken);
+    }
 
     @Override
     public List<UserStatistic> calculateUserPrStatistics(String repoName, String owner, String accessToken, LocalDate startDate, LocalDate endDate) {
-        GitRepoServicePort gitRepoServicePort = ServiceFactory.createGithubServicePort(accessToken);
-        HashMap<Long, UserStatistic> userStatistics = new HashMap<>();
+        HashMap<Long, UserStatistic> userIdUserStatisticsMap = new HashMap<>();
 
+        // #1 Add 'PR state' feature to app
         List<PullRequest> pullRequests =
                 gitRepoServicePort.getPullRequestInDateRange(owner, repoName, null, startDate, endDate);
 
@@ -34,34 +40,31 @@ public class PrStatisticCalculator implements PrStatisticCalculatorPort {
 
         pullRequests.forEach(pullRequest -> {
             Long prOwnerId = pullRequest.getUser().getId();
-            calculatePullRequestStatistics(userStatistics, pullRequest, prOwnerId);
+            calculatePullRequestStatistics(userIdUserStatisticsMap, pullRequest, prOwnerId);
 
             List<Comment> comments = gitRepoServicePort.getPullRequestComments(owner, repoName, pullRequest.getNumber());
-            calculateUserCommentStatistics(userStatistics, comments, prOwnerId);
+            calculateUserCommentStatistics(userIdUserStatisticsMap, comments, prOwnerId);
 
             List<Review> reviews = gitRepoServicePort.getPullRequestReviews(owner, repoName, pullRequest.getNumber());
-            calculateReviewerStatistics(userStatistics, comments, reviews, prOwnerId);
+            calculateReviewerStatistics(userIdUserStatisticsMap, comments, reviews, prOwnerId);
         });
 
-        return userStatistics.values().stream().toList();
+        return userIdUserStatisticsMap.values().stream().toList();
     }
 
     private void calculatePullRequestStatistics(HashMap<Long, UserStatistic> userStatistics, PullRequest pullRequest, Long prOwnerId) {
-        boolean existsInUserContributorsList = userStatistics.containsKey(prOwnerId);
-
-        UserStatistic userStatistic;
-        if (existsInUserContributorsList) {
-            userStatistic = userStatistics.get(prOwnerId);
-            userStatistic.setRaisedPrCount(userStatistic.getRaisedPrCount() + 1);
-        } else {
-            userStatistic = UserStatistic.builder()
-                    .contributor(pullRequest.getUser().getLogin())
-                    .raisedPrCount(1L)
-                    .receivedCommentPerPr(0.0)
-                    .reviewedPrCount(0L)
-                    .build();
+        if (userStatistics.containsKey(prOwnerId)) {
+            userStatistics.get(prOwnerId).incrementRaisedPrCount();
+            return;
         }
-        userStatistics.put(prOwnerId, userStatistic);
+
+        UserStatistic newUserStatistic = UserStatistic.builder()
+                .contributor(pullRequest.getUser().getLogin())
+                .raisedPrCount(1L)
+                .receivedCommentPerPr(0.0)
+                .reviewedPrCount(0L)
+                .build();
+        userStatistics.put(prOwnerId, newUserStatistic);
     }
 
     private void calculateUserCommentStatistics(HashMap<Long, UserStatistic> userStatistics, List<Comment> comments, Long prOwnerId) {
@@ -70,28 +73,32 @@ public class PrStatisticCalculator implements PrStatisticCalculatorPort {
                 .count();
         UserStatistic prOwnerStatistic = userStatistics.get(prOwnerId);
 
-        if(prOwnerStatistic.getRaisedPrCount() == 0) {
+        if (prOwnerStatistic.getRaisedPrCount() == 0) {
             log.error("PR owner has no PRs raised");
-            throw new RuntimeException("PR owner has no PRs raised");
-        } else if(prOwnerStatistic.getRaisedPrCount() == 1) {
+            throw new PrStatisticCalculatorServiceException("PR owner has no PRs raised");
+        }
+
+        if (prOwnerStatistic.getRaisedPrCount() == 1) {
             prOwnerStatistic.setReceivedCommentPerPr((double) receivedCommentCount);
             userStatistics.put(prOwnerId, prOwnerStatistic);
             return;
-        } else {
-            // Subtract 1 because we are adding the current PR's comment count
-            double totalComments = prOwnerStatistic.getReceivedCommentPerPr() * (prOwnerStatistic.getRaisedPrCount() - 1);
-            totalComments += receivedCommentCount;
-            Double calculatedCommentPerPr = totalComments / prOwnerStatistic.getRaisedPrCount();
-            prOwnerStatistic.setReceivedCommentPerPr(calculatedCommentPerPr);
-            userStatistics.put(prOwnerId, prOwnerStatistic);
         }
+
+        // Subtract 1 because we are adding the current PR's comment count
+        double totalComments = prOwnerStatistic.getReceivedCommentPerPr() * (prOwnerStatistic.getRaisedPrCount() - 1);
+        totalComments += receivedCommentCount;
+        Double calculatedCommentPerPr = totalComments / prOwnerStatistic.getRaisedPrCount();
+        prOwnerStatistic.setReceivedCommentPerPr(calculatedCommentPerPr);
+        userStatistics.put(prOwnerId, prOwnerStatistic);
     }
 
     private void calculateReviewerStatistics(HashMap<Long, UserStatistic> userStatistics, List<Comment> comments, List<Review> reviews, Long prOwnerId) {
         List<Long> reviewerUserIds = new ArrayList<>();
         comments.forEach(
                 comment -> {
-                    boolean existsInUserContributorsList = userStatistics.containsKey(comment.getUser().getId());
+                    Long commentUserId = comment.getUser().getId();
+
+                    boolean existsInUserContributorsList = userStatistics.containsKey(commentUserId);
 
                     if (!existsInUserContributorsList) {
                         UserStatistic userStatistic = UserStatistic.builder()
@@ -100,15 +107,15 @@ public class PrStatisticCalculator implements PrStatisticCalculatorPort {
                                 .receivedCommentPerPr(0.0)
                                 .reviewedPrCount(1L)
                                 .build();
-                        userStatistics.put(comment.getUser().getId(), userStatistic);
+                        userStatistics.put(commentUserId, userStatistic);
                         return;
                     }
 
-                    if (!Objects.equals(comment.getAuthorAssociation(), OWNER) && !reviewerUserIds.contains(comment.getUser().getId())) {
-                        UserStatistic userStatistic = userStatistics.get(comment.getUser().getId());
-                        userStatistic.setReviewedPrCount(userStatistic.getReviewedPrCount() + 1);
-                        userStatistics.put(comment.getUser().getId(), userStatistic);
-                        reviewerUserIds.add(comment.getUser().getId());
+                    if (!Objects.equals(comment.getAuthorAssociation(), OWNER) && !reviewerUserIds.contains(commentUserId)) {
+                        UserStatistic userStatistic = userStatistics.get(commentUserId);
+                        userStatistic.incrementReviewedPrCount();
+                        userStatistics.put(commentUserId, userStatistic);
+                        reviewerUserIds.add(commentUserId);
                     }
                 }
         );
@@ -116,26 +123,28 @@ public class PrStatisticCalculator implements PrStatisticCalculatorPort {
         reviews.stream()
                 .filter(review -> !Objects.equals(review.getUser().getId(), prOwnerId))
                 .forEach(review -> {
-                    if (reviewerUserIds.contains(review.getUser().getId())) {
+                    Long reviewerId = review.getUser().getId();
+
+                    if (reviewerUserIds.contains(reviewerId)) {
                         return;
                     }
 
-                    if (!userStatistics.containsKey(review.getUser().getId())) {
+                    if (!userStatistics.containsKey(reviewerId)) {
                         UserStatistic userStatistic = UserStatistic.builder()
                                 .contributor(review.getUser().getLogin())
                                 .raisedPrCount(0L)
                                 .receivedCommentPerPr(0.0)
                                 .reviewedPrCount(1L)
                                 .build();
-                        userStatistics.put(review.getUser().getId(), userStatistic);
-                        reviewerUserIds.add(review.getUser().getId());
+                        userStatistics.put(reviewerId, userStatistic);
+                        reviewerUserIds.add(reviewerId);
                         return;
                     }
 
-                    UserStatistic userStatistic = userStatistics.get(review.getUser().getId());
-                    userStatistic.setReviewedPrCount(userStatistic.getReviewedPrCount() + 1);
-                    userStatistics.put(review.getUser().getId(), userStatistic);
-                    reviewerUserIds.add(review.getUser().getId());
+                    UserStatistic userStatistic = userStatistics.get(reviewerId);
+                    userStatistic.incrementReviewedPrCount();
+                    userStatistics.put(reviewerId, userStatistic);
+                    reviewerUserIds.add(reviewerId);
                 });
     }
 

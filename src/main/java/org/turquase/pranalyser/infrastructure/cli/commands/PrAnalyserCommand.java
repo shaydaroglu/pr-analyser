@@ -1,7 +1,7 @@
 package org.turquase.pranalyser.infrastructure.cli.commands;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.turquase.pranalyser.application.ServiceFactory;
 import org.turquase.pranalyser.infrastructure.cli.adapters.UserCountPrintAdapter;
 import org.turquase.pranalyser.port.in.PrStatisticCalculatorPort;
 import org.turquase.pranalyser.domain.model.UserStatistic;
@@ -23,7 +23,6 @@ import java.util.concurrent.Callable;
         version = "1.0",
         mixinStandardHelpOptions = true
 )
-@RequiredArgsConstructor
 public class PrAnalyserCommand implements Callable<Integer> {
 
     @Option(names = {"-r", "--repository-name"}, description = "Name of the repository.", required = true)
@@ -41,10 +40,11 @@ public class PrAnalyserCommand implements Callable<Integer> {
     @Option(names = {"-ed", "--end-date"}, description = "End date in yyyy-MM-dd format.", required = true)
     private LocalDate endDate;
 
-    private final PrStatisticCalculatorPort prStatisticCalculatorPort;
+    private PrStatisticCalculatorPort prStatisticCalculatorPort;
 
     @Override
     public Integer call() {
+        prStatisticCalculatorPort = ServiceFactory.createPrStatisticCalculatorPort(accessToken);
 
         log.info("Fetching user statistics for repository {} between dates [{}] - [{}].", repositoryName, startDate, endDate);
         List<UserStatistic> userCounts;

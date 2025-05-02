@@ -27,9 +27,9 @@ public class GithubService implements GitRepoServicePort {
 
     private final GithubApi githubApi;
 
-    public GithubService(String authToken) {
+    public GithubService(String accessToken) {
         RetrofitClient retrofitClient = new RetrofitClient();
-        this.githubApi = retrofitClient.getRetrofitClient(authToken).create(GithubApi.class);
+        this.githubApi = retrofitClient.getRetrofitClient(accessToken).create(GithubApi.class);
     }
 
     @Override

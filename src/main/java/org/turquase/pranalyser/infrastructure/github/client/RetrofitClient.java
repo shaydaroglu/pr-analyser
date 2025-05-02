@@ -16,7 +16,7 @@ public class RetrofitClient {
         this.configLoader = new ConfigLoader();
     }
 
-    public Retrofit getRetrofitClient(String authToken) {
+    public Retrofit getRetrofitClient(String accessToken) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
 
@@ -25,7 +25,7 @@ public class RetrofitClient {
 
         OkHttpClient client = new OkHttpClient.Builder()
                 .addInterceptor(loggingInterceptor)
-                .addInterceptor(new AuthInterceptor(authToken))
+                .addInterceptor(new AuthInterceptor(accessToken))
                 .build();
 
         return new Retrofit.Builder()
